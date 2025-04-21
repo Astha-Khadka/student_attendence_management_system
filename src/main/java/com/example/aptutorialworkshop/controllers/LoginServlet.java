@@ -143,8 +143,8 @@ public class LoginServlet extends HttpServlet {
                 // Login successful
 
                 // For session implementation, you would add this code:
-                // HttpSession session = request.getSession();
-                // session.setAttribute("user", user);
+                 HttpSession session = request.getSession();
+                 session.setAttribute("user", user);
                 // session.setMaxInactiveInterval(1800); // 30 minutes
 
                 // For cookie implementation, you would add this code:
@@ -157,7 +157,7 @@ public class LoginServlet extends HttpServlet {
                 // }
 
                 // Pass user to dashboard as request attribute
-                request.setAttribute("user", user);
+//                request.setAttribute("user", user);
 
                 // Convert image bytes to Base64 for display in JSP
                 if (user.getImage() != null && user.getImage().length > 0) {
@@ -169,7 +169,7 @@ public class LoginServlet extends HttpServlet {
                 if (user.getRole() == UserModel.Role.admin) {
                     request.getRequestDispatcher("/WEB-INF/views/admin-dashboard.jsp").forward(request, response);
                 } else {
-                    request.getRequestDispatcher("/WEB-INF/views/user-dashboard.jsp").forward(request, response);
+                    request.getRequestDispatcher("UserDashboardServlet/WEB-INF/views/user-dashboard.jsp").forward(request, response);
                 }
             } else {
                 // Login failed
