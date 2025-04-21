@@ -6,12 +6,12 @@ import jakarta.servlet.annotation.*;
 
 import java.io.IOException;
 
-@WebServlet("/Loginform")
-public class LoginformServlet extends HttpServlet {
+@WebServlet("/Nav_student_dashServlet")
+public class NavstudentdashServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Forward the request to the register.jsp inside WEB-INF/view
-        request.getRequestDispatcher("/WEB-INF/view/login.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/view/users_dashboards/student_dash.jsp").forward(request, response);
+
     }
 
     @Override

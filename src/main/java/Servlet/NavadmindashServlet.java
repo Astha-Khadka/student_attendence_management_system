@@ -6,12 +6,12 @@ import jakarta.servlet.annotation.*;
 
 import java.io.IOException;
 
-@WebServlet("/adminpage")
-public class AdminpageServlet extends HttpServlet {
+@WebServlet("/Nav_admin_dash")
+public class NavadmindashServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Forward the request to the register.jsp inside WEB-INF/view
-        request.getRequestDispatcher("/WEB-INF/view/adminpage.jsp").forward(request, response);
+        request.getRequestDispatcher("/WEB-INF/view/users_dashboards/admin_dash.jsp").forward(request, response);
+
     }
 
     @Override

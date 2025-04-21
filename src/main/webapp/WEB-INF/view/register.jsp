@@ -6,6 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,16 +25,24 @@
             }
         }
 
-        function validateForm(event) {
+        function validateForm() {
             var role = document.getElementById("role").value;
             if(role === "") {
                 alert("Please select a role before submitting!");
-                event.preventDefault(); // Prevent form submission
+                return false;
             }
+
+            var password = document.getElementById("password").value;
+            var confirmPassword = document.getElementById("confirmPassword").value;
+            if (password !== confirmPassword) {
+                alert("Passwords do not match!");
+                return false;
+            }
+
+            return true;
         }
     </script>
 </head>
-
 <body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f7f7f7; color: #333; min-height: 100vh; display: flex; flex-direction: column;">
 
 <!-- Navbar -->
@@ -50,10 +59,16 @@
     <p style="font-size: 1.2rem; color: #555; margin-bottom: 30px;">Fill out the form to create your account.</p>
 </div>
 
+<!-- Error Message -->
+<% String error = (String) request.getAttribute("error"); %>
+<% if (error != null && !error.isEmpty()) { %>
+<div style="color: red; text-align: center; margin: 10px 0;"><%= error %></div>
+<% } %>
+
 <!-- Main Form -->
 <div style="flex: 1; display: flex; justify-content: center; align-items: center;">
     <div style="background-color: #fff; padding: 40px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 100%; max-width: 400px;">
-        <form action="RegisterServlet" method="post" onsubmit="validateForm(event)">
+        <form action="register" method="post" onsubmit="return validateForm()">
 
             <!-- Role Selection -->
             <label for="role" style="display: block; text-align: left; margin-bottom: 8px;">Role:</label>
@@ -78,7 +93,7 @@
             <input type="password" name="confirmPassword" id="confirmPassword" required style="width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc;">
 
             <!-- Student Specific Fields -->
-            <div id="studentFields" style="display: none;">
+            <div id="studentFields" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
                 <label for="rollno" style="display: block; text-align: left; margin-bottom: 8px;">Roll Number:</label>
                 <input type="text" name="rollno" id="rollno" style="width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc;">
 
@@ -87,7 +102,7 @@
             </div>
 
             <!-- Teacher Specific Fields -->
-            <div id="teacherFields" style="display: none;">
+            <div id="teacherFields" style="display: none; margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px;">
                 <label for="employeeID" style="display: block; text-align: left; margin-bottom: 8px;">Employee ID:</label>
                 <input type="text" name="employeeID" id="employeeID" style="width: 100%; padding: 12px; margin: 8px 0; border-radius: 5px; border: 1px solid #ccc;">
 
