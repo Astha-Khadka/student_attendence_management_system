@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<%@ page import="java.util.*, java.text.SimpleDateFormat, model.User, dao.UserDAO, java.sql.SQLException" %>
+<%@ page import="java.util.*, java.text.SimpleDateFormat, model.User, model.Student, model.Teacher, dao.UserDAO, java.sql.SQLException" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%
   // Session check to ensure only authenticated admins access the dashboard
   User user = (User) session.getAttribute("user");
@@ -61,10 +62,20 @@
   );
   request.setAttribute("notifications", notifications);
 
+  // Get dashboard data
+  Map<String, Object> stats = (Map<String, Object>) request.getAttribute("stats");
+  List<Student> students = (List<Student>) request.getAttribute("students");
+  List<Teacher> teachers = (List<Teacher>) request.getAttribute("teachers");
+  List<User> recentRegistrations = stats != null ? (List<User>) stats.get("recentRegistrations") : new ArrayList<>();
+
   // Current date
   SimpleDateFormat sdf = new SimpleDateFormat("MMMM dd, yyyy");
   String currentDate = sdf.format(new Date());
-  request.setAttribute("currentDate", currentDate);
+
+  // Initialize default values if stats is null
+  int totalStudents = stats != null ? (int) stats.get("totalStudents") : 0;
+  int totalTeachers = stats != null ? (int) stats.get("totalTeachers") : 0;
+  double averageAttendance = stats != null ? (double) stats.get("averageAttendance") : 0.0;
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -77,10 +88,10 @@
   <title>Admin Dashboard - Itahari International College</title>
   <!-- Favicon -->
   <link rel="icon" type="image/png" href="${pageContext.request.contextPath}/favicon.png">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <!-- AOS Animation Library -->
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
-  <!-- Font Awesome for Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <!-- Google Fonts for Arial (as used in homepage) -->
   <link href="https://fonts.googleapis.com/css2?family=Arial:wght@400;700&display=swap" rel="stylesheet">
   <style>
@@ -92,13 +103,15 @@
       background-color: #f5f5f5;
     }
 
+    /* Remove or update conflicting navbar styles */
     .navbar {
-      transition: all 0.3s ease;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      z-index: 50;
+      background-color: white;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      /* Remove position: fixed, transition, and z-index for Bootstrap compatibility */
+    }
+    .navbar-brand {
+      color: #4a90e2 !important;
+      font-weight: bold;
     }
 
     .navbar.scrolled {
@@ -387,23 +400,138 @@
         justify-content: center;
       }
     }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .stat-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    
+    .stat-card i {
+      font-size: 2em;
+      color: #1e90ff;
+      margin-bottom: 10px;
+    }
+    
+    .stat-card h3 {
+      font-size: 1.5em;
+      margin: 10px 0;
+      color: #2f4f4f;
+    }
+    
+    .stat-card p {
+      color: #666;
+      margin: 0;
+    }
+    
+    .recent-registrations {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    
+    .recent-registrations h2 {
+      color: #1e90ff;
+      margin-bottom: 20px;
+    }
+    
+    .registration-list {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .registration-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .registration-item:last-child {
+      border-bottom: none;
+    }
+    
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    
+    .action-card {
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    
+    .action-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .action-card i {
+      font-size: 2em;
+      color: #1e90ff;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-<!-- Navbar -->
-<nav class="navbar" style="background-color: #fff;" data-aos="fade-down">
-  <div style="max-width: 1200px; margin: 0 auto; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
-    <div style="font-size: 24px; font-weight: bold; color: #1e90ff;">Itahari International College</div>
-    <div style="display: flex; gap: 24px;">
-      <a href="#home" style="color: #4B5563; text-decoration: none; font-size: 16px;">Home</a>
-      <a href="#users" style="color: #4B5563; text-decoration: none; font-size: 16px;">Users</a>
-      <a href="#reports" style="color: #4B5563; text-decoration: none; font-size: 16px;">Reports</a>
-      <a href="#notifications" style="color: #4B5563; text-decoration: none; font-size: 16px;">Notifications</a>
-      <a href="#settings" style="color: #4B5563; text-decoration: none; font-size: 16px;">Settings</a>
-      <a href="${pageContext.request.contextPath}/logout" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px;">Logout</a>
-    </div>
-  </div>
-</nav>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <div class="container">
+            <a class="navbar-brand" href="${pageContext.request.contextPath}/admin">
+                <i class="fas fa-graduation-cap"></i> Admin Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="${pageContext.request.contextPath}/admin">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/users">
+                            <i class="fas fa-users"></i> Users
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/notifications">
+                            <i class="fas fa-bell"></i> Notifications
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/admin/settings">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="${pageContext.request.contextPath}/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
 <!-- Hero Section -->
 <section id="home" class="hero-bg" data-aos="fade-up" data-aos-duration="1200">
@@ -473,7 +601,7 @@
             }
           %>
         </ul>
-        <a href="${pageContext.request.contextPath}/manageUsers" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-eye"></i> Manage Users</a>
+        <a href="${pageContext.request.contextPath}/admin/users" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-eye"></i> Manage Users</a>
       </div>
 
       <!-- Attendance Reports -->
@@ -487,7 +615,7 @@
           <span><%= attendanceReport.get("averageAttendance") %>%</span>
         </div>
         <p style="text-align: center; margin: 10px 0; font-size: 16px; color: #4B5563;"><%= attendanceReport.get("totalStudents") %> students, <%= attendanceReport.get("classesToday") %> classes today</p>
-        <a href="${pageContext.request.contextPath}/fullReports" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-file-alt"></i> View Reports</a>
+        <a href="${pageContext.request.contextPath}/admin/reports" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-file-alt"></i> View Reports</a>
       </div>
 
       <!-- Notifications -->
@@ -505,7 +633,7 @@
             %>
           </ul>
         </div>
-        <a href="${pageContext.request.contextPath}/allNotifications" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-bell"></i> View All</a>
+        <a href="${pageContext.request.contextPath}/admin/notifications" class="cta-button" style="background-color: #1e90ff; color: #fff; padding: 8px 16px; border-radius: 4px; text-decoration: none; font-size: 16px; margin-top: 16px; display: inline-block;"><i class="fas fa-bell"></i> View All</a>
       </div>
     </div>
   </div>

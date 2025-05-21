@@ -1,9 +1,5 @@
 package dao;
 
-import model.User;
-import model.Student;
-import util.DatabaseConnection;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,6 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import model.Student;
+import model.User;
+import util.DatabaseConnection;
 
 public class StudentDAO {
 
@@ -61,12 +61,14 @@ public class StudentDAO {
             return false;
         } finally {
             try {
-                if (pstmt != null) pstmt.close();
+                if (pstmt != null)
+                    pstmt.close();
             } catch (SQLException e) {
                 logger.log(Level.WARNING, "Failed to close PreparedStatement", e);
             }
             try {
-                if (conn != null) conn.close();
+                if (conn != null)
+                    conn.close();
             } catch (SQLException e) {
                 logger.log(Level.WARNING, "Failed to close Connection", e);
             }
@@ -76,7 +78,7 @@ public class StudentDAO {
     public void updatePhotoPath(int userId, String photoPath) throws SQLException {
         String sql = "UPDATE student SET photo_path = ? WHERE user_id = ?";
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, photoPath);
             stmt.setInt(2, userId);
             int rowsAffected = stmt.executeUpdate();
@@ -97,7 +99,7 @@ public class StudentDAO {
         Student student = null;
 
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
+                PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, userId);
             ResultSet rs = stmt.executeQuery();
 
@@ -123,13 +125,12 @@ public class StudentDAO {
     }
 
     public List<Student> getAllStudents() throws SQLException {
+        List<Student> students = new ArrayList<>();
         String sql = "SELECT s.user_id, s.rollno, s.classname, s.photo_path, u.username, u.email, u.role " +
                 "FROM student s JOIN users u ON s.user_id = u.id";
-        List<Student> students = new ArrayList<>();
-
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+                PreparedStatement stmt = conn.prepareStatement(sql);
+                ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Student student = new Student();
@@ -149,5 +150,51 @@ public class StudentDAO {
         }
 
         return students;
+    }
+
+    public boolean deleteStudent(int studentId) throws SQLException {
+        Connection conn = null;
+        PreparedStatement stmt1 = null, stmt2 = null, stmt3 = null;
+        boolean success = false;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            // Delete from attendance
+            stmt1 = conn.prepareStatement("DELETE FROM attendance WHERE student_id = ?");
+            stmt1.setInt(1, studentId);
+            stmt1.executeUpdate();
+
+            // Delete from student
+            stmt2 = conn.prepareStatement("DELETE FROM student WHERE user_id = ?");
+            stmt2.setInt(1, studentId);
+            int rowsAffected = stmt2.executeUpdate();
+
+            // Delete from users
+            stmt3 = conn.prepareStatement("DELETE FROM users WHERE id = ?");
+            stmt3.setInt(1, studentId);
+            stmt3.executeUpdate();
+
+            if (rowsAffected > 0) {
+                conn.commit();
+                success = true;
+            } else {
+                conn.rollback();
+            }
+        } catch (SQLException e) {
+            if (conn != null)
+                conn.rollback();
+            throw e;
+        } finally {
+            if (stmt1 != null)
+                stmt1.close();
+            if (stmt2 != null)
+                stmt2.close();
+            if (stmt3 != null)
+                stmt3.close();
+            if (conn != null)
+                conn.close();
+        }
+        return success;
     }
 }
